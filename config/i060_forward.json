@@ -1,0 +1,11 @@
+{
+  "seed": 29,
+  "width": 32,
+  "order": 32,
+  "adam": 4000,
+  "lbfgs": 600,
+  "threads_per_run": 2,
+  "parallel_runs": 2,
+  "inlets": ["steady", "dilution"],
+  "methods": ["differential", "resistance", "augmented"]
+}
