@@ -1,9 +1,8 @@
 # Grouting PINN
 
-Training and analysis code for **Particle retention and injectability in
-permeation grouting with time-varying inlet concentration using a
-resistance-coupled physics-informed neural network**, by Pengcheng Zhu and
-Tielin Chen.
+Training and analysis code for **A resistance-coupled physics-informed neural
+network for particle retention and injectability in pressure-controlled
+permeation grouting**, by Pengcheng Zhu and Tielin Chen.
 
 Public repository: https://github.com/math-sudu/grouting-pinn
 
@@ -50,6 +49,8 @@ manuscript cases.
 ```sh
 python scripts/run_i060_suite.py --config config/i060_forward.json
 python scripts/repair_i060_darcy.py --input results/i060_forward/steady_differential_29 --output results/i060_forward/steady_differential_repaired_29
+python scripts/refine_i060_transport.py --input results/i060_forward/steady_resistance_29 --output results/i060_transport_refinement/steady_resistance_29
+python scripts/refine_i060_transport.py --input results/i060_forward/dilution_resistance_29 --output results/i060_transport_refinement/dilution_resistance_29
 python scripts/analyze_i060_forward.py
 ```
 
@@ -57,13 +58,20 @@ The suite runs all six inlet/formulation combinations using seed 29, width 32,
 32-point resistance quadrature, 4,000 Adam steps and up to 600 L-BFGS
 iterations. The second command reproduces the additional residual-adaptive
 training of the sustained-supply D case described in the manuscript.
+The two transport continuations use denser column, outlet and inlet-transition
+samples with the same physics. Their complete fields and histories supply the
+physical-response figures and table. The original runs supply the matched
+hydraulic comparison.
 
-Each run writes `model.pt`, `fields.npz`, and `result.json` under
-`results/i060_forward/`. The suite also records training logs and `suite.json`.
-Analysis produces `analysis.json`, `curves.csv`, and `profiles.csv`, including
-flow, concentration, deposited material, pressure, solid inventories and
-collection-window observables. Training durations depend on the CPU; floating
-point results can vary across dependency versions and hardware.
+Each baseline run writes `model.pt`, `fields.npz`, and `result.json` under
+`results/i060_forward/`; transport continuations write the same files under
+`results/i060_transport_refinement/`. The suite also records training logs and `suite.json`.
+Analysis produces `analysis.json`, including the original suite and continuation
+summaries. The original-suite `curves.csv` and `profiles.csv` provide the hydraulic
+comparison; the physical-response plots read the continuation `fields.npz`
+directly. These outputs include flow, concentration, deposited material, pressure,
+solid inventories and collection-window observables. Training durations depend
+on the CPU; floating point results can vary across dependency versions and hardware.
 
 ## Code map
 
@@ -73,6 +81,7 @@ point results can vary across dependency versions and hardware.
 | `scripts/i060_coupled_pilot.py` | Original feasibility model and shared network/autodifferentiation helpers |
 | `scripts/run_i060_suite.py` | Six-case training suite |
 | `scripts/repair_i060_darcy.py` | Residual-adaptive continuation of the local Darcy formulation |
+| `scripts/refine_i060_transport.py` | Transport continuation for the outlet-delivery assessment |
 | `scripts/i060_observation_operators.py` | Collection density and whole-segment inventories |
 | `scripts/analyze_i060_forward.py` | Numerical summaries and CSV export |
 | `config/i060_forward.json` | Manuscript training configuration |
@@ -81,3 +90,11 @@ The dimensionless forward cases are fully specified in the code and require
 no experimental input files. Digitized experimental observations and the saved
 numerical data used in the manuscript are available from the corresponding
 author, Tielin Chen (tlchen1@bjtu.edu.cn), on request.
+When those experimental CSV files are available, include their collection and
+segment summaries by passing their directory explicitly:
+
+```sh
+python scripts/analyze_i060_forward.py --experimental-data data/zhang_2020
+```
+
+Without this option, the analysis command processes the numerical study alone.

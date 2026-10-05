@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from pathlib import Path
@@ -16,6 +17,36 @@ OUTPUT = ROOT/"results/i060_forward"
 
 def cumulative(coordinate, values):
     return np.r_[0., np.cumsum(np.diff(coordinate)*(values[1:]+values[:-1])/2)]
+
+
+def experimental_responses(source):
+    with (source / "collection_observations.csv").open(encoding="utf-8", newline="") as stream:
+        collections = list(csv.DictReader(stream))
+    with (source / "segment_observations.csv").open(encoding="utf-8", newline="") as stream:
+        sections = list(csv.DictReader(stream))
+    responses = {}
+    for case in ("S6", "S14"):
+        samples = sorted((row for row in collections if row["combination"] == case),
+                         key=lambda row: float(row["outlet_time_s"]))
+        q = np.array([float(row["volume_ml"])/float(row["collection_duration_s"])
+                      for row in samples])
+        c = np.array([(float(row["density_g_cm3"])-1.)/2.1 for row in samples])
+        j = q*c
+        segments = sorted((row for row in sections if row["combination"] == case),
+                          key=lambda row: int(row["segment_number"]))
+        inventory = np.array([float(row["initial_pore_volume_cm3"])/
+                              (1.+3.1*float(row["water_cement_ratio"])) for row in segments])
+        responses[case] = {
+            "collection_count": len(samples),
+            "first_last_mixture_rate_ml_s": [float(q[0]), float(q[-1])],
+            "first_last_solid_rate_ml_s": [float(j[0]), float(j[-1])],
+            "last_first_mixture_ratio": float(q[-1]/q[0]),
+            "last_first_concentration_ratio": float(c[-1]/c[0]),
+            "last_first_solid_rate_ratio": float(j[-1]/j[0]),
+            "section_total_solid_volumes_ml": inventory.tolist(),
+            "inlet_third_total_inventory_fraction": float(inventory[:2].sum()/inventory.sum()),
+        }
+    return responses
 
 
 def read_run(path):
@@ -66,6 +97,10 @@ def read_run(path):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experimental-data", type=Path,
+                        help="Include collection and segment summaries from this CSV directory")
+    args = parser.parse_args()
     suite = json.loads((OUTPUT/"suite.json").read_text(encoding="utf-8"))
     rows, fields = {}, {}
     for run in suite["runs"]:
@@ -93,7 +128,14 @@ def main():
                 "final_outlet_c_difference_from_R": float(other["c"][-1, -1]-ref["c"][-1, -1]),
                 "interpretation": "Disagreement between PINN formulations; not independent reference-solution error.",
             }
-    analysis = {"runs": rows, "paired_differences": differences}
+    refinement = {}
+    for inlet in ("steady", "dilution"):
+        path = ROOT / "results/i060_transport_refinement" / f"{inlet}_resistance_29"
+        refinement[inlet], _ = read_run(path)
+    analysis = {"runs": rows, "paired_differences": differences,
+                "transport_refinement": refinement}
+    if args.experimental_data is not None:
+        analysis["experimental_responses"] = experimental_responses(args.experimental_data)
     (OUTPUT/"analysis.json").write_text(json.dumps(analysis, indent=2)+"\n", encoding="utf-8")
     with (OUTPUT/"curves.csv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream)
