@@ -40,7 +40,8 @@ python -m unittest discover -s scripts -p "test_i060_*.py" -v
 
 The tests cover initial and boundary conditions, mobile and deposited storage,
 hydraulic-feedback gradients, collection-window integration and segment
-inventories. A short run checks the training and export pipeline:
+inventories, and first-attainment interpolation with partial-window transport.
+A short run checks the training and export pipeline:
 
 ```sh
 python scripts/i060_coupled.py --method resistance --inlet dilution --width 8 --order 8 --adam 2 --lbfgs 1 --output results/smoke
@@ -59,6 +60,7 @@ python scripts/refine_i060_transport.py --input results/i060_forward/dilution_re
 python scripts/refine_i060_transport.py --input results/i060_forward/steady_augmented_29 --output results/i060_transport_refinement/steady_augmented_29
 python scripts/refine_i060_transport.py --input results/i060_forward/dilution_augmented_29 --output results/i060_transport_refinement/dilution_augmented_29
 python scripts/analyze_i060_forward.py
+python scripts/analyze_i060_supply_tasks.py --target-deposited 0.046
 ```
 
 The suite runs all six inlet/formulation combinations using seed 29, width 32,
@@ -68,7 +70,8 @@ training of the sustained-supply D case described in the manuscript.
 The four R and D+I transport continuations use the same denser column, outlet
 and inlet-transition samples. Their complete fields and histories supply the
 particle comparison; the R fields supply the physical-response figures and
-table. The original runs supply the paired hydraulic comparison.
+the fixed-duration and common-inventory tables. The original runs supply the
+paired hydraulic comparison.
 
 Each baseline run writes `model.pt`, `fields.npz`, and `result.json` under
 `results/i060_forward/`; transport continuations write the same files under
@@ -79,6 +82,24 @@ comparison; the physical-response plots read the continuation `fields.npz`
 directly. These outputs include flow, concentration, deposited material, pressure,
 solid inventories and collection-window observables. Training durations depend
 on the CPU; floating point results can vary across dependency versions and hardware.
+
+### Compare supply histories at a common deposited inventory
+
+The final command reads the four transport-continuation `fields.npz` files and
+writes `results/i060_forward/supply_tasks.json`. The target, `0.046`, is deposited
+solid volume divided by column volume. For each history and PINN formulation,
+the analysis locates its first attainment by linear interpolation between saved
+times, then reports elapsed time, cumulative inlet solids and mixture volume,
+remaining flow, mobile storage, outlet solid delivery, and deposit placement.
+Flux integration includes the final partial time interval. Placement is described
+by the half-inventory position and the deposited fraction in the inlet third.
+
+Change `--target-deposited` to assess another amount reached by all four saved
+trajectories; an unattained target raises an error. This step uses the existing
+trained histories and requires no further training. `--input` selects a different
+directory with the same four case names, and `--output` selects the JSON destination.
+The fixed-duration results in `analysis.json` describe the common end time;
+`supply_tasks.json` compares histories at their own first-attainment times.
 
 ## Code map
 
@@ -91,6 +112,7 @@ on the CPU; floating point results can vary across dependency versions and hardw
 | `scripts/refine_i060_transport.py` | Transport continuation for the outlet-delivery assessment |
 | `scripts/i060_observation_operators.py` | Collection density and whole-segment inventories |
 | `scripts/analyze_i060_forward.py` | Numerical summaries and CSV export |
+| `scripts/analyze_i060_supply_tasks.py` | First attainment, material/time/flow tradeoffs and deposit placement |
 | `config/i060_forward.json` | Manuscript training configuration |
 
 The dimensionless forward cases are fully specified in the code and require
