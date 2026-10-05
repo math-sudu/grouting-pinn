@@ -13,6 +13,11 @@ three PINN hydraulic formulations: resistance integration (`resistance`, R),
 local Darcy enforcement (`differential`, D), and local Darcy enforcement with
 an integral constraint (`augmented`, D+I).
 
+The state network has four raw outputs, with the outlet concentration offset
+evaluated independently from the interior profile. At width 32, R has 2340
+active parameters; the two additional hydraulic networks in D and D+I bring
+their total to 6790.
+
 ## Installation
 
 Use Python 3.10 or newer and install the dependencies in a virtual environment:
@@ -51,6 +56,8 @@ python scripts/run_i060_suite.py --config config/i060_forward.json
 python scripts/repair_i060_darcy.py --input results/i060_forward/steady_differential_29 --output results/i060_forward/steady_differential_repaired_29
 python scripts/refine_i060_transport.py --input results/i060_forward/steady_resistance_29 --output results/i060_transport_refinement/steady_resistance_29
 python scripts/refine_i060_transport.py --input results/i060_forward/dilution_resistance_29 --output results/i060_transport_refinement/dilution_resistance_29
+python scripts/refine_i060_transport.py --input results/i060_forward/steady_augmented_29 --output results/i060_transport_refinement/steady_augmented_29
+python scripts/refine_i060_transport.py --input results/i060_forward/dilution_augmented_29 --output results/i060_transport_refinement/dilution_augmented_29
 python scripts/analyze_i060_forward.py
 ```
 
@@ -58,10 +65,10 @@ The suite runs all six inlet/formulation combinations using seed 29, width 32,
 32-point resistance quadrature, 4,000 Adam steps and up to 600 L-BFGS
 iterations. The second command reproduces the additional residual-adaptive
 training of the sustained-supply D case described in the manuscript.
-The two transport continuations use denser column, outlet and inlet-transition
-samples with the same physics. Their complete fields and histories supply the
-physical-response figures and table. The original runs supply the matched
-hydraulic comparison.
+The four R and D+I transport continuations use the same denser column, outlet
+and inlet-transition samples. Their complete fields and histories supply the
+particle comparison; the R fields supply the physical-response figures and
+table. The original runs supply the paired hydraulic comparison.
 
 Each baseline run writes `model.pt`, `fields.npz`, and `result.json` under
 `results/i060_forward/`; transport continuations write the same files under

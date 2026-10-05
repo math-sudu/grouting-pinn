@@ -33,10 +33,29 @@ class CoupledTests(unittest.TestCase):
             for parameter in self.net.state.parameters():
                 parameter.zero_()
             # At late times the inlet is .02; the interior can still hold .08.
-            self.net.state[-1].bias[0] = math.log(.08/.92)-math.log(.02/.98)
+            self.net.state[-1].bias[3] = math.log(.08/.92)-math.log(.02/.98)
         c, _, _ = self.net(torch.tensor([[1., .9], [0., .9]]))
         self.assertAlmostEqual(float(c[0].detach()), .08, places=9)
         self.assertAlmostEqual(float(c[1].detach()), .02, places=9)
+
+    def test_outlet_curvature_is_not_suppressed_by_boundary_maps(self):
+        class PolynomialRawFields(torch.nn.Module):
+            def forward(self, coordinates):
+                x = (coordinates[:, :1]+1)/2
+                return torch.cat((1+2*x, x, x, .3+0*x), 1)
+
+        self.net.state = PolynomialRawFields()
+        xt = torch.tensor([[1., .7]], requires_grad=True)
+        c, _, diffusive_flux = self.net(xt)
+        cx = grad(c, xt)[:, :1]
+        cxx = grad(cx, xt)[:, :1]
+        cxxx = grad(cxx, xt)[:, :1]
+        flux_xx = grad(grad(diffusive_flux, xt)[:, :1], xt)[:, :1]
+        self.assertEqual(float(cx.detach()), 0)
+        self.assertEqual(float(diffusive_flux.detach()), 0)
+        self.assertNotEqual(float(cxx.detach()), 0)
+        self.assertNotEqual(float(cxxx.detach()), 0)
+        self.assertNotEqual(float(flux_xx.detach()), 0)
 
     def test_total_storage_identity(self):
         x = torch.tensor([.15, .48, .85])

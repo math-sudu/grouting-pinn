@@ -130,8 +130,10 @@ def main():
             }
     refinement = {}
     for inlet in ("steady", "dilution"):
-        path = ROOT / "results/i060_transport_refinement" / f"{inlet}_resistance_29"
-        refinement[inlet], _ = read_run(path)
+        refinement[inlet] = {}
+        for method in ("resistance", "augmented"):
+            path = ROOT / "results/i060_transport_refinement" / f"{inlet}_{method}_29"
+            refinement[inlet][method], _ = read_run(path)
     analysis = {"runs": rows, "paired_differences": differences,
                 "transport_refinement": refinement}
     if args.experimental_data is not None:

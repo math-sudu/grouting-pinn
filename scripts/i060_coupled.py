@@ -47,20 +47,23 @@ class Fields(torch.nn.Module):
     def __init__(self, problem, width=32):
         super().__init__()
         self.problem = problem
-        self.state = mlp(2, 3, width)
+        self.state = mlp(2, 4, width)
         self.pressure = mlp(2, 1, width)
         self.flow = mlp(1, 1, width)
 
     def forward(self, xt):
         p = self.problem
         x, t = xt[:, :1], xt[:, 1:]
-        y = x*(2-x)
-        raw = self.state(torch.cat((2*y-1, 2*t/p.end-1), 1))
+        normalized_t = 2*t/p.end-1
+        raw = self.state(torch.cat((2*x-1, normalized_t), 1))
+        outlet_offset = self.state(torch.cat((torch.ones_like(t), normalized_t), 1))[:, 3:4]
         inlet_fraction = p.cin*p.fraction(t)
         inlet_logit = torch.log(inlet_fraction/(1-inlet_fraction))
-        # At x=0 this is exactly the prescribed inlet. Interior concentration
-        # can exceed the current inlet after dilution, while remaining in [0,1].
-        c = p.startup(t)*torch.sigmoid(inlet_logit+y*raw[:, :1])
+        # Separate the outlet value from the interior shape. Both polynomial
+        # factors have zero derivative at x=1, without folding the raw fields
+        # about the outlet. The interior factor has unit maximum on [0,1].
+        logit_offset = x*(2-x)*outlet_offset + (27/4)*x*(1-x)**2*raw[:, :1]
+        c = p.startup(t)*torch.sigmoid(inlet_logit+logit_offset)
         sigma = p.capacity*(1-torch.exp(-t*softplus(raw[:, 1:2])))
         diff_flux = p.cin*p.dispersion**.5*(1-x)*p.startup(t)*raw[:, 2:3]
         return c, sigma, diff_flux
