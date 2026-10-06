@@ -1,8 +1,8 @@
 # Grouting PINN
 
-Training and analysis code for **A resistance-coupled physics-informed neural
-network for particle retention and injectability in pressure-controlled
-permeation grouting**, by Pengcheng Zhu and Tielin Chen.
+Training and analysis code for **Injectability and particle retention in
+pressure-controlled permeation grouting assessed using a resistance-coupled
+physics-informed neural network**, by Pengcheng Zhu and Tielin Chen.
 
 Public repository: https://github.com/math-sudu/grouting-pinn
 
