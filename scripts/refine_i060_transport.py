@@ -39,7 +39,7 @@ def main():
         times.append(torch.linspace(.48, .62, 41))
     t = torch.unique(torch.cat(times))[:, None]
     rule = quadrature(64)
-    optimizer = torch.optim.LBFGS(net.parameters(), max_iter=args.lbfgs,
+    optimizer = torch.optim.LBFGS(net.optimization_parameters(method), max_iter=args.lbfgs,
                                   history_size=50, line_search_fn="strong_wolfe",
                                   tolerance_change=1e-12)
     evaluations = 0

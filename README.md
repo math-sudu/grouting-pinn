@@ -17,6 +17,9 @@ The state network has four raw outputs, with the outlet concentration offset
 evaluated independently from the interior profile. At width 32, R has 2340
 active parameters; the two additional hydraulic networks in D and D+I bring
 their total to 6790.
+Initial training and transport continuation pass only the parameters used by
+the selected formulation to the optimizer. The common checkpoint layout
+retains all three modules so that existing saved states remain loadable.
 
 ## Installation
 

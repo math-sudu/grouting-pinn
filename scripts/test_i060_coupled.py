@@ -1,11 +1,12 @@
 """Verify state support, conserved storage and hydraulic feedback gradients."""
 
+import copy
 import math
 import unittest
 
 import torch
 
-from i060_coupled import Fields, Problem, grad, quadrature, resistance_q, residuals
+from i060_coupled import Fields, Problem, grad, objective, quadrature, resistance_q, residuals
 
 
 class CoupledTests(unittest.TestCase):
@@ -83,6 +84,39 @@ class CoupledTests(unittest.TestCase):
             minus = resistance_q(self.net, t, quadrature(48)).sum()
             parameter[1] = old
         torch.testing.assert_close(derivative, (plus-minus)/(2*step), rtol=1e-6, atol=1e-8)
+
+    def test_optimizer_contains_exactly_the_parameters_used_by_each_loss(self):
+        x = torch.tensor([.15, .48, .85])
+        t = torch.tensor([[.17], [.56], [.87]])
+        for method, count in (("resistance", 2340), ("differential", 6790),
+                              ("augmented", 6790)):
+            with self.subTest(method=method):
+                self.net.zero_grad(set_to_none=True)
+                objective(self.net, x, t, method, quadrature(16)).backward()
+                parameters = tuple(self.net.optimization_parameters(method))
+                used = {id(p) for p in self.net.parameters() if p.grad is not None}
+                self.assertEqual({id(p) for p in parameters}, used)
+                self.assertEqual(sum(p.numel() for p in parameters), count)
+
+    def test_state_only_lbfgs_preserves_the_coupled_state_update(self):
+        reduced = copy.deepcopy(self.net)
+        x = torch.tensor([.15, .48, .85])
+        t = torch.tensor([[.17], [.56], [.87]])
+        for net, parameters in ((self.net, self.net.parameters()),
+                                (reduced, reduced.optimization_parameters("resistance"))):
+            optimizer = torch.optim.LBFGS(parameters, max_iter=3,
+                                         line_search_fn="strong_wolfe")
+
+            def closure():
+                optimizer.zero_grad(set_to_none=True)
+                loss = objective(net, x, t, "resistance", quadrature(16))
+                loss.backward()
+                return loss
+
+            optimizer.step(closure)
+        for name, parameter in self.net.state_dict().items():
+            torch.testing.assert_close(parameter, reduced.state_dict()[name],
+                                       rtol=1e-12, atol=1e-12)
 
 
 if __name__ == "__main__":

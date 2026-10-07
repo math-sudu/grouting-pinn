@@ -51,6 +51,11 @@ class Fields(torch.nn.Module):
         self.pressure = mlp(2, 1, width)
         self.flow = mlp(1, 1, width)
 
+    def optimization_parameters(self, method):
+        # R reconstructs the hydraulic fields from deposition. Keep the common
+        # checkpoint layout, but omit inactive hydraulic weights from L-BFGS.
+        return self.state.parameters() if method == "resistance" else self.parameters()
+
     def forward(self, xt):
         p = self.problem
         x, t = xt[:, :1], xt[:, 1:]
@@ -186,7 +191,8 @@ def train(args):
         return x, t
 
     start = time.perf_counter()
-    optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+    parameters = tuple(net.optimization_parameters(args.method))
+    optimizer = torch.optim.Adam(parameters, lr=1e-3)
     x, t = samples()
     history = []
     for step in range(args.adam):
@@ -200,7 +206,7 @@ def train(args):
             row = {"step": step+1, "loss": float(loss.detach()), "seconds": time.perf_counter()-start}
             history.append(row)
             print(json.dumps(row), flush=True)
-    optimizer = torch.optim.LBFGS(net.parameters(), max_iter=args.lbfgs,
+    optimizer = torch.optim.LBFGS(parameters, max_iter=args.lbfgs,
                                   history_size=50, line_search_fn="strong_wolfe")
     evaluations = 0
 
