@@ -21,6 +21,9 @@ from torch.nn.functional import softplus
 from i060_coupled_pilot import grad, mlp
 
 
+STATE_MAP = "integrated-startup-v1"
+
+
 @dataclass(frozen=True)
 class Problem:
     phi0: float = .4
@@ -38,6 +41,11 @@ class Problem:
 
     def startup(self, t):
         return 1-torch.exp(-(t/.06)**2)
+
+    def capture_clock(self, t):
+        # Integral of the inlet startup: c = O(t^2), hence capture and
+        # deposition must start as O(t^2) and O(t^3), respectively.
+        return t-(torch.pi**.5*.06/2)*torch.erf(t/.06)
 
     def inlet_c(self, t):
         return self.cin*self.startup(t)*self.fraction(t)
@@ -69,17 +77,17 @@ class Fields(torch.nn.Module):
         # about the outlet. The interior factor has unit maximum on [0,1].
         logit_offset = x*(2-x)*outlet_offset + (27/4)*x*(1-x)**2*raw[:, :1]
         c = p.startup(t)*torch.sigmoid(inlet_logit+logit_offset)
-        sigma = p.capacity*(1-torch.exp(-t*softplus(raw[:, 1:2])))
+        sigma = -p.capacity*torch.expm1(-p.capture_clock(t)*softplus(raw[:, 1:2]))
         diff_flux = p.cin*p.dispersion**.5*(1-x)*p.startup(t)*raw[:, 2:3]
         return c, sigma, diff_flux
 
     def p(self, xt):
         x, t = xt[:, :1], xt[:, 1:]
         normalized = torch.cat((2*x-1, 2*t/self.problem.end-1), 1)
-        return 1-x+t*x*(1-x)*self.pressure(normalized)
+        return 1-x+self.problem.capture_clock(t)*x*(1-x)*self.pressure(normalized)
 
     def q(self, t):
-        return torch.exp(-t*softplus(self.flow(2*t/self.problem.end-1)))
+        return torch.exp(-self.problem.capture_clock(t)*softplus(self.flow(2*t/self.problem.end-1)))
 
 
 def permeability(problem, sigma):
@@ -126,7 +134,7 @@ def objective(net, x, times, method, rule):
     return sum(r.square().mean() for r in residuals(net, x, times, method, rule).values())
 
 
-def evaluate(net, method, rule):
+def evaluate(net, method, rule, *, regional_residuals=False):
     problem = net.problem
     x = torch.linspace(0, 1, 301)
     times = torch.linspace(0, problem.end, 201)[:, None]
@@ -155,6 +163,25 @@ def evaluate(net, method, rule):
     tv = ((torch.arange(100)+.5)*problem.end/100)[:, None]
     rv = residuals(net, xv, tv, method, quadrature(64))
     metrics = {k+"_rms": float(v.detach().square().mean().sqrt()) for k, v in rv.items()}
+    if regional_residuals:
+        xxv, ttv = torch.meshgrid(xv, tv.flatten(), indexing="ij")
+        supports = {
+            "whole_domain": torch.ones_like(xxv, dtype=torch.bool),
+            "startup": ttv <= .15,
+            "inlet_third": xxv < 1/3,
+            "outlet_third": xxv > 2/3,
+            "late_time": ttv >= .7,
+        }
+        if problem.inlet == "dilution":
+            supports["dilution_transition"] = (ttv >= .48) & (ttv <= .62)
+        scales = {"mass": problem.cin, "exchange": problem.retention*problem.cin,
+                  "constitutive": problem.cin*problem.dispersion**.5}
+        metrics["particle_residual_rms_unscaled"] = {
+            support: {name: float((rv[name].detach().flatten()[mask.flatten()]*scale)
+                                 .square().mean().sqrt())
+                      for name, scale in scales.items()}
+            for support, mask in supports.items()
+        }
     metrics.update(
         q_final=float(q[-1]), outlet_c_final=float(c[-1, -1]),
         sigma_max=float(sigma.max()), concentration_min=float(c.min()),
@@ -175,7 +202,7 @@ def evaluate(net, method, rule):
 
 def train(args):
     torch.manual_seed(args.seed)
-    problem = Problem(inlet=args.inlet)
+    problem = Problem(inlet=args.inlet, retention=args.retention)
     net = Fields(problem, args.width)
     gen = torch.Generator().manual_seed(args.seed+1000)
     rule = quadrature(args.order)
@@ -206,9 +233,9 @@ def train(args):
             row = {"step": step+1, "loss": float(loss.detach()), "seconds": time.perf_counter()-start}
             history.append(row)
             print(json.dumps(row), flush=True)
-    optimizer = torch.optim.LBFGS(parameters, max_iter=args.lbfgs,
-                                  history_size=50, line_search_fn="strong_wolfe")
     evaluations = 0
+    optimizer = torch.optim.LBFGS(parameters, max_iter=args.lbfgs, history_size=50,
+                                  line_search_fn="strong_wolfe")
 
     def closure():
         nonlocal evaluations
@@ -226,6 +253,7 @@ def train(args):
     torch.save(net.state_dict(), args.output/"model.pt")
     config = vars(args).copy()
     config["output"] = str(args.output)
+    config["state_map"] = STATE_MAP
     result = {"config": config, "model": asdict(problem), "metrics": metrics,
               "seconds": time.perf_counter()-start, "lbfgs_evaluations": evaluations,
               "history": history, "runtime": {"torch": torch.__version__, "dtype": "float64", "device": "cpu"}}
@@ -241,6 +269,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=29)
     parser.add_argument("--width", type=int, default=32)
     parser.add_argument("--order", type=int, default=32)
+    parser.add_argument("--retention", type=float, default=4.)
     parser.add_argument("--adam", type=int, default=4000)
     parser.add_argument("--lbfgs", type=int, default=600)
     parser.add_argument("--threads", type=int, default=2)

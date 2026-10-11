@@ -4,8 +4,13 @@
   "order": 32,
   "adam": 4000,
   "lbfgs": 600,
+  "refinement_lbfgs": 1200,
   "threads_per_run": 2,
   "parallel_runs": 2,
-  "inlets": ["steady", "dilution"],
-  "methods": ["differential", "resistance", "augmented"]
+  "cases": [
+    {"inlet": "steady", "retention": 4},
+    {"inlet": "dilution", "retention": 4},
+    {"inlet": "steady", "retention": 8}
+  ],
+  "methods": ["resistance", "augmented"]
 }

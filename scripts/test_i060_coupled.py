@@ -39,6 +39,24 @@ class CoupledTests(unittest.TestCase):
         self.assertAlmostEqual(float(c[0].detach()), .08, places=9)
         self.assertAlmostEqual(float(c[1].detach()), .02, places=9)
 
+    def test_capture_clock_preserves_zero_initial_rates(self):
+        t = torch.linspace(0, 1, 17)[:, None].requires_grad_(True)
+        torch.testing.assert_close(grad(self.problem.capture_clock(t), t),
+                                   self.problem.startup(t))
+        x = torch.linspace(0, 1, 13)[:, None]
+        xt = torch.cat((x, 0*x), 1).requires_grad_(True)
+        _, sigma, _ = self.net(xt)
+        for field in (sigma, self.net.p(xt)):
+            torch.testing.assert_close(grad(field, xt)[:, 1:], 0*x,
+                                       rtol=0, atol=1e-15)
+        t0 = torch.zeros(1, 1, requires_grad=True)
+        for flow in (self.net.q(t0), resistance_q(self.net, t0, quadrature(32))):
+            torch.testing.assert_close(grad(flow, t0), 0*t0, rtol=0, atol=1e-15)
+        # The leading deposition term scales cubically with startup time.
+        times = torch.tensor([[1e-5], [2e-5]])
+        _, sigma, _ = self.net(torch.cat((0*times+.5, times), 1))
+        self.assertAlmostEqual(float((sigma[1]/sigma[0]).detach()), 8., places=3)
+
     def test_outlet_curvature_is_not_suppressed_by_boundary_maps(self):
         class PolynomialRawFields(torch.nn.Module):
             def forward(self, coordinates):

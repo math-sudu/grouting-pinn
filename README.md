@@ -1,132 +1,66 @@
 # Grouting PINN
 
-Training and analysis code for **Injectability and particle retention in
-pressure-controlled permeation grouting assessed using a resistance-coupled
-physics-informed neural network**, by Pengcheng Zhu and Tielin Chen.
+Code for **A resistance-coupled physics-informed neural network for pressure-controlled permeation grouting**, by Pengcheng Zhu and Tielin Chen.
 
-Public repository: https://github.com/math-sudu/grouting-pinn
+The state network learns concentration, deposition and dispersive flux. Deposition changes both mobile pore volume and permeability. The resistance formulation (R) reconstructs pressure and flow by differentiable quadrature. The integral-augmented formulation (D+I, `augmented`) learns the hydraulic fields and enforces local Darcy and global resistance constraints.
 
-The model couples suspension transport, particle retention, pore-volume loss
-and permeability through a differentiable hydraulic-resistance integral.
-The supplied configuration runs sustained and diluted inlet histories with
-three PINN hydraulic formulations: resistance integration (`resistance`, R),
-local Darcy enforcement (`differential`, D), and local Darcy enforcement with
-an integral constraint (`augmented`, D+I).
+The integrated inlet-startup function controls the deposited state and learned hydraulic maps. It gives zero initial deposition and hydraulic rates for finite network outputs. The concentration map fixes the changing inlet value while allowing higher concentrations inside the column after dilution. R uses 2340 active parameters; D+I uses 6790.
 
-The state network has four raw outputs, with the outlet concentration offset
-evaluated independently from the interior profile. At width 32, R has 2340
-active parameters; the two additional hydraulic networks in D and D+I bring
-their total to 6790.
-Initial training and transport continuation pass only the parameters used by
-the selected formulation to the optimizer. The common checkpoint layout
-retains all three modules so that existing saved states remain loadable.
+## Install and check
 
-## Installation
-
-Use Python 3.10 or newer and install the dependencies in a virtual environment:
+Use Python 3.10 or newer. Runs use CPU double precision and PyTorch 2.8.0.
 
 ```sh
 python -m pip install -r requirements.txt
+python -m unittest discover -s scripts -p "test_i060_*.py"
 ```
 
-The implementation runs on CPU in double precision. The manuscript runs used
-PyTorch 2.8.0 with two CPU threads per run. The publication checks used Python
-3.13.7, PyTorch 2.8.0 and NumPy 2.4.4.
+The tests cover initial values and rates, boundary conditions, hydraulic feedback, phase storage, collection operators and first-attainment integration.
 
-Run all commands below from the repository root.
+## Reproduce the study
 
-## Check the implementation
+Run these commands from the repository root:
 
 ```sh
-python -m unittest discover -s scripts -p "test_i060_*.py" -v
-```
-
-The tests cover initial and boundary conditions, mobile and deposited storage,
-hydraulic-feedback gradients, collection-window integration and segment
-inventories, and first-attainment interpolation with partial-window transport.
-A short run checks the training and export pipeline:
-
-```sh
-python scripts/i060_coupled.py --method resistance --inlet dilution --width 8 --order 8 --adam 2 --lbfgs 1 --output results/smoke
-```
-
-This short run is an execution check. Use the full configuration below for the
-manuscript cases.
-
-## Reproduce the numerical study
-
-```sh
-python scripts/run_i060_suite.py --config config/i060_forward.json
-python scripts/repair_i060_darcy.py --input results/i060_forward/steady_differential_29 --output results/i060_forward/steady_differential_repaired_29
-python scripts/refine_i060_transport.py --input results/i060_forward/steady_resistance_29 --output results/i060_transport_refinement/steady_resistance_29
-python scripts/refine_i060_transport.py --input results/i060_forward/dilution_resistance_29 --output results/i060_transport_refinement/dilution_resistance_29
-python scripts/refine_i060_transport.py --input results/i060_forward/steady_augmented_29 --output results/i060_transport_refinement/steady_augmented_29
-python scripts/refine_i060_transport.py --input results/i060_forward/dilution_augmented_29 --output results/i060_transport_refinement/dilution_augmented_29
+python scripts/run_i060_suite.py
 python scripts/analyze_i060_forward.py
-python scripts/analyze_i060_supply_tasks.py --target-deposited 0.046
+python scripts/analyze_i060_supply_tasks.py
+python scripts/analyze_i060_treatment_tasks.py --no-plot
 ```
 
-The suite runs all six inlet/formulation combinations using seed 29, width 32,
-32-point resistance quadrature, 4,000 Adam steps and up to 600 L-BFGS
-iterations. The second command reproduces the additional residual-adaptive
-training of the sustained-supply D case described in the manuscript.
-The four R and D+I transport continuations use the same denser column, outlet
-and inlet-transition samples. Their complete fields and histories supply the
-particle comparison; the R fields supply the physical-response figures and
-the fixed-duration and common-inventory tables. The original runs supply the
-paired hydraulic comparison.
+The configuration `config/i060_forward.json` specifies six runs: R and D+I for sustained supply and dilution at retention coefficient 4, and sustained supply at coefficient 8. Each run uses seed 29, width 32, 32-point hydraulic quadrature, 4000 Adam steps and up to 600 L-BFGS iterations. It then continues with 64-point quadrature and up to 1200 L-BFGS iterations on the stated denser transport points. Parallel runs share the CPU; elapsed times are not used for a speed comparison.
 
-Each baseline run writes `model.pt`, `fields.npz`, and `result.json` under
-`results/i060_forward/`; transport continuations write the same files under
-`results/i060_transport_refinement/`. The suite also records training logs and `suite.json`.
-Analysis produces `analysis.json`, including the original suite and continuation
-summaries. The original-suite `curves.csv` and `profiles.csv` provide the hydraulic
-comparison; the physical-response plots read the continuation `fields.npz`
-directly. These outputs include flow, concentration, deposited material, pressure,
-solid inventories and collection-window observables. Training durations depend
-on the CPU; floating point results can vary across dependency versions and hardware.
+Each base run writes `model.pt`, `fields.npz` and `result.json` under `results/i060_forward/<case>/`; continuation writes the same files under `results/i060_transport_refinement/<case>/`. The suite also records each stage's console log. All manuscript hydraulic and particle results use the continuation fields.
 
-### Compare supply histories at a common deposited inventory
+The state-map identifier is saved in each result. Weights from the earlier temporal map must be retrained before continuation with this version, because the same weight shapes represent different physical fields.
 
-The final command reads the four transport-continuation `fields.npz` files and
-writes `results/i060_forward/supply_tasks.json`. The target, `0.046`, is deposited
-solid volume divided by column volume. For each history and PINN formulation,
-the analysis locates its first attainment by linear interpolation between saved
-times, then reports elapsed time, cumulative inlet solids and mixture volume,
-remaining flow, mobile storage, outlet solid delivery, and deposit placement.
-Flux integration includes the final partial time interval. Placement is described
-by the half-inventory position and the deposited fraction in the inlet third.
+## Read the supplied histories
 
-Change `--target-deposited` to assess another amount reached by all four saved
-trajectories; an unattained target raises an error. This step uses the existing
-trained histories and requires no further training. `--input` selects a different
-directory with the same four case names, and `--output` selects the JSON destination.
-The fixed-duration results in `analysis.json` describe the common end time;
-`supply_tasks.json` compares histories at their own first-attainment times.
+When the six field directories are already available, run only the three analysis commands. They produce:
 
-## Code map
+- `analysis.json`, `curves.csv` and `profiles.csv`: the six complete solutions and paired hydraulic/particle responses.
+- `supply_tasks.json`: first attainment of the common whole-column deposited target 0.046, including input, mixture throughput, mobile inventory, outlet delivery and deposit placement.
+- `treatment_tasks.json`: first attainment of deposited targets in the fixed interval [1/3, 1], their reachable ranges, material partition and post-dilution regional capture integral.
 
-| File | Purpose |
-| --- | --- |
-| `scripts/i060_coupled.py` | Physical problem, neural fields, residuals, training and evaluation |
-| `scripts/i060_coupled_pilot.py` | Original feasibility model and shared network/autodifferentiation helpers |
-| `scripts/run_i060_suite.py` | Six-case training suite |
-| `scripts/repair_i060_darcy.py` | Residual-adaptive continuation of the local Darcy formulation |
-| `scripts/refine_i060_transport.py` | Transport continuation for the outlet-delivery assessment |
-| `scripts/i060_observation_operators.py` | Collection density and whole-segment inventories |
-| `scripts/analyze_i060_forward.py` | Numerical summaries and CSV export |
-| `scripts/analyze_i060_supply_tasks.py` | First attainment, material/time/flow tradeoffs and deposit placement |
-| `config/i060_forward.json` | Manuscript training configuration |
+All solid inventories are divided by whole-column volume. Attainment uses interpolation between saved times and integrates the final partial time interval. Unattained targets remain unattained. The treatment reference is the regional inventory when sustained R first reaches the whole-column target.
 
-The dimensionless forward cases are fully specified in the code and require
-no experimental input files. Digitized experimental observations and the saved
-numerical data used in the manuscript are available from the corresponding
-author, Tielin Chen (tlchen1@bjtu.edu.cn), on request.
-When those experimental CSV files are available, include their collection and
-segment summaries by passing their directory explicitly:
+`--no-plot` exports the complete numerical treatment analysis using NumPy alone. The manuscript figure rendering is maintained in the author's GeoSkills workspace. Saved numerical fields and experimental records are available from the corresponding author, Tielin Chen (tlchen1@bjtu.edu.cn).
+
+Experimental CSVs can be included in the summary with:
 
 ```sh
 python scripts/analyze_i060_forward.py --experimental-data data/zhang_2020
 ```
 
-Without this option, the analysis command processes the numerical study alone.
+## Main files
+
+| File | Purpose |
+| --- | --- |
+| `scripts/i060_coupled.py` | Neural fields, physics, training and field export |
+| `scripts/i060_coupled_pilot.py` | Shared network and differentiation helpers |
+| `scripts/refine_i060_transport.py` | Matched transport continuation |
+| `scripts/run_i060_suite.py` | Six-case reproduction command |
+| `scripts/analyze_i060_forward.py` | Current fields and physical summaries |
+| `scripts/analyze_i060_supply_tasks.py` | Target attainment and transport integration |
+| `scripts/analyze_i060_treatment_tasks.py` | Treatment requirements and capture |
+| `scripts/i060_observation_operators.py` | Collection and segment operators |

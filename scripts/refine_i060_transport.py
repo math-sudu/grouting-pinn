@@ -14,7 +14,7 @@ import time
 import numpy as np
 import torch
 
-from i060_coupled import Fields, Problem, evaluate, objective, quadrature
+from i060_coupled import STATE_MAP, Fields, Problem, evaluate, objective, quadrature
 
 
 def main():
@@ -22,10 +22,13 @@ def main():
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lbfgs", type=int, default=1200)
+    parser.add_argument("--threads", type=int, default=2)
     args = parser.parse_args()
     torch.set_default_dtype(torch.float64)
-    torch.set_num_threads(2)
+    torch.set_num_threads(args.threads)
     original = json.loads((args.input / "result.json").read_text(encoding="utf-8"))
+    if original["config"].get("state_map") != STATE_MAP:
+        raise ValueError("Checkpoint uses the previous state map; retrain it before continuation.")
     problem = Problem(**original["model"])
     method = original["config"]["method"]
     net = Fields(problem, original["config"]["width"])
@@ -39,11 +42,11 @@ def main():
         times.append(torch.linspace(.48, .62, 41))
     t = torch.unique(torch.cat(times))[:, None]
     rule = quadrature(64)
-    optimizer = torch.optim.LBFGS(net.optimization_parameters(method), max_iter=args.lbfgs,
-                                  history_size=50, line_search_fn="strong_wolfe",
-                                  tolerance_change=1e-12)
     evaluations = 0
     start = time.perf_counter()
+    optimizer = torch.optim.LBFGS(net.optimization_parameters(method), max_iter=args.lbfgs,
+                               history_size=50, line_search_fn="strong_wolfe",
+                               tolerance_change=1e-12)
 
     def closure():
         nonlocal evaluations
@@ -56,7 +59,8 @@ def main():
                               "seconds": time.perf_counter()-start}), flush=True)
         return loss
 
-    optimizer.step(closure)
+    if args.lbfgs:
+        optimizer.step(closure)
     metrics, fields = evaluate(net, method, rule)
     args.output.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(args.output / "fields.npz", **fields)
@@ -64,6 +68,7 @@ def main():
     result = {
         "config": {**original["config"], "output": str(args.output), "order": 64,
                    "refinement_lbfgs": args.lbfgs,
+                   "threads": args.threads,
                    "spatial_samples": len(x), "temporal_samples": len(t)},
         "model": original["model"], "metrics": metrics,
         "input_ref": str(args.input), "seconds": time.perf_counter()-start,

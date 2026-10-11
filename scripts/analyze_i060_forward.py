@@ -10,6 +10,8 @@ from pathlib import Path
 import numpy as np
 
 from i060_observation_operators import collection_density, segment_inventory
+from analyze_i060_supply_tasks import regional_deposits
+from run_i060_suite import plan
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT/"results/i060_forward"
@@ -98,44 +100,29 @@ def read_run(path):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=Path, default=ROOT/"config/i060_forward.json")
     parser.add_argument("--experimental-data", type=Path,
                         help="Include collection and segment summaries from this CSV directory")
     args = parser.parse_args()
-    suite = json.loads((OUTPUT/"suite.json").read_text(encoding="utf-8"))
+    config = json.loads(args.config.read_text(encoding="utf-8"))
     rows, fields = {}, {}
-    for run in suite["runs"]:
+    for run in plan(config):
         name = run["name"]
-        rows[name], fields[name] = read_run(OUTPUT/name)
-    for path in sorted(OUTPUT.glob("*_repaired_*/result.json")):
-        rows[path.parent.name], fields[path.parent.name] = read_run(path.parent)
+        rows[name], fields[name] = read_run(ROOT/"results/i060_transport_refinement"/name)
+        rows[name]["terminal_treatment_inventory"] = float(regional_deposits(fields[name], (1/3, 1.))[-1])
     differences = {}
-    for inlet in ("steady", "dilution"):
-        names = {method: next(name for name in rows if name.startswith(f"{inlet}_{method}_"))
-                 for method in ("differential", "resistance", "augmented")}
-        ref = fields[names["resistance"]]
-        differences[inlet] = {}
-        methods = ["differential", "augmented"]
-        repair = next((name for name in rows if name.startswith(f"{inlet}_differential_repaired_")), None)
-        if repair is not None:
-            names["differential_repaired"] = repair
-            methods.append("differential_repaired")
-        for method in methods:
-            other = fields[names[method]]
-            differences[inlet][method] = {
+    for run in plan(config):
+        if run["method"] == "augmented":
+            other = fields[run["name"]]
+            ref = fields[run["name"].replace("_augmented_", "_resistance_")]
+            differences[run["name"]] = {
                 "max_flow_difference_from_R": float(np.abs(other["q"]-ref["q"]).max()),
                 "max_concentration_difference_from_R": float(np.abs(other["c"]-ref["c"]).max()),
                 "max_deposition_difference_from_R": float(np.abs(other["sigma"]-ref["sigma"]).max()),
                 "final_outlet_c_difference_from_R": float(other["c"][-1, -1]-ref["c"][-1, -1]),
                 "interpretation": "Disagreement between PINN formulations; not independent reference-solution error.",
             }
-    refinement = {}
-    for inlet in ("steady", "dilution"):
-        refinement[inlet] = {}
-        for method in ("resistance", "augmented"):
-            path = ROOT / "results/i060_transport_refinement" / f"{inlet}_{method}_29"
-            refinement[inlet][method], _ = read_run(path)
-    analysis = {"runs": rows, "paired_differences": differences,
-                "transport_refinement": refinement}
+    analysis = {"runs": rows, "paired_differences": differences}
     if args.experimental_data is not None:
         analysis["experimental_responses"] = experimental_responses(args.experimental_data)
     (OUTPUT/"analysis.json").write_text(json.dumps(analysis, indent=2)+"\n", encoding="utf-8")
