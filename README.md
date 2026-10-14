@@ -1,6 +1,6 @@
 # Grouting PINN
 
-Code for **A resistance-coupled physics-informed neural network for pressure-controlled permeation grouting**, by Pengcheng Zhu and Tielin Chen.
+Code for **A resistance-coupled physics-informed neural network for staged permeation grouting**, by Pengcheng Zhu and Tielin Chen.
 
 The particle networks represent concentration, dispersive flux and irreversible deposition. The resistance formulation (R) reconstructs pressure and flow by differentiable quadrature. The integral-augmented formulation (D+I, `augmented`) learns the hydraulic fields and enforces local Darcy and global resistance constraints.
 
