@@ -44,6 +44,21 @@ The supply analysis writes `results/i060_forward/supply_response.json`: cement a
 
 The material column is 0.30 m long and 0.10 m in diameter, with a 100 kPa pressure difference, initial permeability `1e-11 m2` and a 21.3 min observation interval. The two stocks have water–cement mass ratios 2 and 5 and share a hydration clock. Viscosity data and their source DOI are in `data/yang_2020/rheology.json`; geometry, feeds and inventory scales are in `config/i060_material_delivery.json`.
 
+## Particle origins at blend start
+
+`solve_i060_origins.py` holds each material R solution's flow, pore volume and capture capacity fixed and solves two nonnegative particle cohorts with a separate PINN. The old cohort is mobile at `t=0.525` (11.1825 min); the new cohort enters afterward. Both have their own transport equation, inlet flux and segment mass balances. Capture is integrated from the common retention law. The second cohort is solved directly, not obtained by subtracting from the total state.
+
+```sh
+python scripts/solve_i060_origins.py dilution --initialize
+python scripts/solve_i060_origins.py mixed --initialize
+python scripts/solve_i060_origins.py dilution --resume --nx 120 --nt 256 --adam 0 --lbfgs 2200
+python scripts/solve_i060_origins.py mixed --resume --nx 120 --nt 256 --adam 0 --lbfgs 2200
+```
+
+The first two commands fit a linear-output initialization; the subsequent `--resume` commands impose nonnegative concentrations and exactly zero initial new-particle inventory on a denser sample set. Outputs are `results/i060_origins/<case>/model.pt` and `result.json`. The summary contains initial mobile mass, later cement supply, downstream and whole-column capture, outlet transport, remaining mobile mass, and consistency with the parent state. Add `--device cpu` to run without CUDA. With saved cohort weights, `--evaluate-only --device cpu` reconstructs these quantities without training. The parent checkpoints already supplied above are the only required inputs; exporting their dense fields is optional for this analysis.
+
+For the reported solutions, old particles contribute about 88.3 g downstream under rich-to-dilute supply and 61.0 g under constant mixing; later supply contributes about 19.3 and 22.9 g. Their differences, together with the 0.27 g pre-existing deposit difference, account for the approximately 24 g final advantage.
+
 The manuscript's figure rendering is maintained in the author's GeoSkills workspace. Experimental records are available from the corresponding author, Tielin Chen (tlchen1@bjtu.edu.cn).
 
 Experimental CSVs can be included in the summary with:
@@ -74,4 +89,5 @@ python scripts/i060_coupled.py --method resistance --inlet dilution --material-c
 | `scripts/run_i060_suite.py` | Four-case constant-viscosity training |
 | `scripts/analyze_i060_forward.py` | Current fields and physical summaries |
 | `scripts/analyze_i060_supply_response.py` | Material inputs, destinations and resistance |
+| `scripts/solve_i060_origins.py` | Independent old/new particle cohorts on fixed R states |
 | `scripts/i060_observation_operators.py` | Collection and segment operators |
