@@ -31,7 +31,7 @@ def main():
         raise ValueError("Checkpoint uses the previous state map; retrain it before continuation.")
     problem = Problem(**original["model"])
     method = original["config"]["method"]
-    net = Fields(problem, original["config"]["width"])
+    net = Fields(problem, original["config"]["width"], original["config"]["capture_nodes"])
     net.load_state_dict(torch.load(args.input / "model.pt", weights_only=True))
     # Resolve transport across the column and the outlet, and the short inlet
     # transition. Keep the entire injection history in the objective.

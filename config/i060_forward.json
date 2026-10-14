@@ -9,8 +9,7 @@
   "parallel_runs": 2,
   "cases": [
     {"inlet": "steady", "retention": 4},
-    {"inlet": "dilution", "retention": 4},
-    {"inlet": "steady", "retention": 8}
+    {"inlet": "dilution", "retention": 4}
   ],
   "methods": ["resistance", "augmented"]
 }

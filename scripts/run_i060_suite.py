@@ -1,4 +1,4 @@
-"""Train and continue the six current manuscript cases."""
+"""Train and continue the configured constant-viscosity PINN cases."""
 
 from __future__ import annotations
 

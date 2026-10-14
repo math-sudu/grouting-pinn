@@ -34,7 +34,7 @@ class CoupledTests(unittest.TestCase):
             for parameter in self.net.state.parameters():
                 parameter.zero_()
             # At late times the inlet is .02; the interior can still hold .08.
-            self.net.state[-1].bias[3] = math.log(.08/.92)-math.log(.02/.98)
+            self.net.state[-1].bias[2] = math.log(.08/.92)-math.log(.02/.98)
         c, _, _ = self.net(torch.tensor([[1., .9], [0., .9]]))
         self.assertAlmostEqual(float(c[0].detach()), .08, places=9)
         self.assertAlmostEqual(float(c[1].detach()), .02, places=9)
@@ -61,7 +61,7 @@ class CoupledTests(unittest.TestCase):
         class PolynomialRawFields(torch.nn.Module):
             def forward(self, coordinates):
                 x = (coordinates[:, :1]+1)/2
-                return torch.cat((1+2*x, x, x, .3+0*x), 1)
+                return torch.cat((1+2*x, x, .3+0*x), 1)
 
         self.net.state = PolynomialRawFields()
         xt = torch.tensor([[1., .7]], requires_grad=True)
@@ -91,7 +91,7 @@ class CoupledTests(unittest.TestCase):
 
     def test_resistance_gradient_reaches_deposition_parameters(self):
         t = torch.tensor([[.2], [.5], [.9]])
-        parameter = self.net.state[-1].bias
+        parameter = self.net.hazard[-1].bias
         derivative = torch.autograd.grad(resistance_q(self.net, t, quadrature(48)).sum(), parameter)[0][1]
         with torch.no_grad():
             old = float(parameter[1])
@@ -106,15 +106,54 @@ class CoupledTests(unittest.TestCase):
     def test_optimizer_contains_exactly_the_parameters_used_by_each_loss(self):
         x = torch.tensor([.15, .48, .85])
         t = torch.tensor([[.17], [.56], [.87]])
-        for method, count in (("resistance", 2340), ("differential", 6790),
-                              ("augmented", 6790)):
+        for method in ("resistance", "differential", "augmented"):
             with self.subTest(method=method):
                 self.net.zero_grad(set_to_none=True)
                 objective(self.net, x, t, method, quadrature(16)).backward()
                 parameters = tuple(self.net.optimization_parameters(method))
                 used = {id(p) for p in self.net.parameters() if p.grad is not None}
                 self.assertEqual({id(p) for p in parameters}, used)
-                self.assertEqual(sum(p.numel() for p in parameters), count)
+
+    def test_capture_is_irreversible_and_uses_the_integrated_rate(self):
+        # Strongly varying positive nodal rates exercise partial intervals and
+        # exact knots, including the zero-startup and terminal boundaries.
+        with torch.no_grad():
+            for parameter in self.net.hazard.parameters():
+                parameter.zero_()
+            self.net.hazard[-1].bias.copy_(4*torch.sin(torch.arange(65)*1.7))
+        times = torch.unique(torch.cat((torch.linspace(0, 1, 513),
+                                        torch.linspace(0, 1, 65))))[:, None]
+        xt = torch.cat((torch.full_like(times, .37), times), 1).requires_grad_(True)
+        _, sigma, _ = self.net(xt)
+        self.assertGreaterEqual(float(sigma.detach().diff(dim=0).min()), 0.)
+        self.assertEqual(float(sigma[0].detach()), 0.)
+        self.assertLess(float(sigma.detach().max()), self.problem.capacity)
+        rates = torch.nn.functional.softplus(self.net.hazard[-1].bias.detach())
+        clock = self.problem.capture_clock(times)
+        index = (torch.searchsorted(self.net.capture_grid, clock.flatten(), right=True)-1).clamp(0, 63)
+        fraction = (clock.flatten()-self.net.capture_grid[index])/self.net.capture_grid.diff()[index]
+        expected = self.problem.startup(times)*(rates[index]+fraction*(rates[index+1]-rates[index]))[:, None]
+        torch.testing.assert_close(grad(self.net.cumulative_hazard(xt), xt)[:, 1:], expected)
+        torch.testing.assert_close(grad(sigma, xt)[:, 1:],
+                                   (self.problem.capacity-sigma)*expected)
+        middle = torch.tensor([[.37, .2387]], requires_grad=True)
+        epsilon = torch.tensor([[0., 1e-6]])
+        finite = (self.net(middle+epsilon)[1]-self.net(middle-epsilon)[1])/(2e-6)
+        torch.testing.assert_close(grad(self.net(middle)[1], middle)[:, 1:], finite,
+                                   rtol=1e-7, atol=1e-9)
+
+    def test_tensor_grid_matches_pointwise_capture_and_autograd(self):
+        x = torch.tensor([0., .37, 1.])
+        times = torch.tensor([[0.], [1/64], [.2387], [1.]])
+        xx, tt = torch.meshgrid(x, times.flatten(), indexing="ij")
+        xt = torch.stack((xx.flatten(), tt.flatten()), 1).requires_grad_(True)
+        _, sigma, _ = self.net(xt)
+        grid_sigma, grid_rate = self.net.deposition_grid(x, times)
+        torch.testing.assert_close(grid_sigma.flatten(), sigma.flatten())
+        torch.testing.assert_close(grid_rate.flatten(), grad(sigma, xt)[:, 1])
+        parameter = self.net.hazard[-1].weight
+        torch.testing.assert_close(torch.autograd.grad(grid_sigma.sum(), parameter)[0],
+                                   torch.autograd.grad(sigma.sum(), parameter)[0])
 
     def test_state_only_lbfgs_preserves_the_coupled_state_update(self):
         reduced = copy.deepcopy(self.net)

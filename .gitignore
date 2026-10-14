@@ -1,5 +1,12 @@
 __pycache__/
 *.py[cod]
 .venv/
-results/
+results/**
+!results/**/
+!results/i060_feed/*/model.pt
+!results/i060_feed/*/result.json
+!results/i060_schedule/constant_*/model.pt
+!results/i060_schedule/constant_*/result.json
+!results/i060_transport_refinement/*_29/model.pt
+!results/i060_transport_refinement/*_29/result.json
 .env

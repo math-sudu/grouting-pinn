@@ -1,0 +1,47 @@
+{
+  "name": "aged_newtonian_cement_delivery",
+  "rheology_data": "data/yang_2020/rheology.json",
+  "material": {
+    "cement_density_kg_m3": 3100.0,
+    "water_density_kg_m3": 1000.0,
+    "water_viscosity_pa_s": 0.00089,
+    "batch_age_at_start_min": 0.0,
+    "density_basis": "Nominal design densities for volume conversion and gravity; the rheology paper does not report cement density.",
+    "interpolation": "Shape-preserving cubic Hermite interpolation in age at each measured concentration, followed by the same interpolation in local solid volume fraction. Add the pure-water node at every age.",
+    "dilute_extension": "Between water and the lowest measured concentration (w/c=10), the water-anchored interpolation is the specified constitutive extension."
+  },
+  "feed": {
+    "control": {
+      "boundary": "feed_flux",
+      "switch_time": 0.55,
+      "switch_width": 0.05
+    },
+    "first_water_cement_mass_ratio": 2.0,
+    "second_water_cement_mass_ratio": 5.0,
+    "preparation": "Cement for both feeds is wetted at the common zero of the injection clock. Reservoirs are kept mixed. All transported cement has the same hydration age; the local concentration accounts for dilution and retention.",
+    "stock_sizing": "Prepare the plan-specific drawn stock volumes plus the specified unused reserve before injection. The reserve remains in its mixed reservoir at stop and is charged to freshly prepared material; no recovery credit is applied.",
+    "unused_stock_reserve_m3": [0.0, 0.0],
+    "equipment": "The constructed supply control plane is at the column face, with zero line hold-up and zero stock reserve. Feed is blended by volumetric fractions from the two mixed stocks and pure water. Equipment outside this defined control volume is not modeled."
+  },
+  "column": {
+    "length_m": 0.3,
+    "diameter_m": 0.1,
+    "initial_permeability_m2": 1e-11,
+    "mechanical_pressure_difference_pa": 100000.0,
+    "gravity_along_flow_m_s2": 9.81,
+    "basis": "Constructed, initially saturated upward column with six 0.05 m segments. Pressure is imposed across the column faces. Geometry, permeability and pressure are design inputs."
+  },
+  "model": {
+    "phi0": 0.4,
+    "capacity": 0.2,
+    "dispersion": 0.01,
+    "retention": 4.0,
+    "end": 1.0
+  },
+  "inventory_balance": {
+    "segment_edges": [0.0, 0.16666666666666666, 0.3333333333333333, 0.5, 0.6666666666666666, 0.8333333333333334, 1.0],
+    "solid_fraction_scale": 0.01
+  },
+  "delivery_task": "config/i060_segment_deposition.json",
+  "reference": "All schedules share q0=k0*Delta_p/(mu_ref*L), where mu_ref is the measured initial viscosity of the first feed. Time is L/q0; t=1 is the end of the saved observation interval."
+}

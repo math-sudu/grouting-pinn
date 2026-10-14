@@ -1,0 +1,170 @@
+{
+  "config": {
+    "method": "augmented",
+    "inlet": "dilution",
+    "seed": 29,
+    "width": 32,
+    "capture_nodes": 65,
+    "order": 64,
+    "retention": 4.0,
+    "material_config": null,
+    "switch_time": null,
+    "resume": null,
+    "initialize_transport": "results\\i060_transport_refinement\\dilution_augmented_29",
+    "spatial_samples": 80,
+    "temporal_samples": 160,
+    "outlet_samples": 32,
+    "inventory_loss": false,
+    "capture_inventory_loss": false,
+    "inventory_weight": 1.0,
+    "focus_interval": null,
+    "device": "cuda",
+    "adam": 2000,
+    "lbfgs": 1200,
+    "threads": 2,
+    "output": "results\\i060_transport_refinement\\dilution_augmented_29",
+    "state_map": "cumulative-hazard-v2"
+  },
+  "model": {
+    "phi0": 0.4,
+    "cin": 0.1,
+    "capacity": 0.2,
+    "dispersion": 0.01,
+    "retention": 4.0,
+    "end": 1.0,
+    "inlet": "dilution",
+    "dilution_fraction": 0.2,
+    "material": null,
+    "boundary": "resident",
+    "switch_time": 0.55,
+    "switch_width": 0.05
+  },
+  "metrics": {
+    "mass_rms": 0.005888400840143861,
+    "exchange_rms": 0.0020799866787628643,
+    "constitutive_rms": 0.004059058417663944,
+    "darcy_rms": 0.0007800823158619616,
+    "hydraulic_integral_rms": 0.00022987574825603668,
+    "q_final": 0.642235342678664,
+    "outlet_c_final": 0.0036204784349678086,
+    "sigma_max": 0.12613188389322258,
+    "concentration_min": 0.0,
+    "concentration_max": 0.09999999993444147,
+    "deposited_final": 0.04629389937100244,
+    "mobile_final": 0.002714967884807928,
+    "max_mass_defect": 0.00015568092498671054,
+    "max_pressure_flow_defect": 0.0009214312248523315,
+    "max_interior_above_current_inlet": 0.04218875641167079,
+    "cumulative_inlet_solid": 0.05002656204954044,
+    "cumulative_outlet_solid": 0.0011733757187167826
+  },
+  "seconds": 155.8055452999979,
+  "lbfgs_evaluations": 1283,
+  "history": [
+    {
+      "step": 1,
+      "loss": 0.00022113839646054873,
+      "seconds": 0.10708600000361912
+    },
+    {
+      "step": 201,
+      "loss": 0.00010533040381918796,
+      "seconds": 7.262157000004663
+    },
+    {
+      "step": 401,
+      "loss": 9.561514293765058e-05,
+      "seconds": 14.36283060000278
+    },
+    {
+      "step": 601,
+      "loss": 9.603873144994515e-05,
+      "seconds": 21.27270510001108
+    },
+    {
+      "step": 801,
+      "loss": 0.00011564458646747633,
+      "seconds": 28.276143399998546
+    },
+    {
+      "step": 1001,
+      "loss": 9.597840383938795e-05,
+      "seconds": 35.31318700000702
+    },
+    {
+      "step": 1201,
+      "loss": 9.860976830613873e-05,
+      "seconds": 42.34736660000635
+    },
+    {
+      "step": 1401,
+      "loss": 0.00011621791386905087,
+      "seconds": 49.50763030000962
+    },
+    {
+      "step": 1601,
+      "loss": 9.832003980691377e-05,
+      "seconds": 56.6168941000069
+    },
+    {
+      "step": 1801,
+      "loss": 8.89801266804772e-05,
+      "seconds": 63.762756800002535
+    },
+    {
+      "step": 2000,
+      "loss": 0.00027620813705436065,
+      "seconds": 70.9186694000091
+    }
+  ],
+  "runtime": {
+    "torch": "2.8.0+cu126",
+    "dtype": "float64",
+    "device": "cuda"
+  },
+  "training_stages": [
+    {
+      "config": {
+        "method": "augmented",
+        "inlet": "dilution",
+        "seed": 29,
+        "width": 32,
+        "capture_nodes": 65,
+        "order": 64,
+        "retention": 4.0,
+        "material_config": null,
+        "switch_time": null,
+        "resume": null,
+        "initialize_transport": "results\\i060_transport_refinement\\dilution_augmented_29",
+        "spatial_samples": 80,
+        "temporal_samples": 160,
+        "outlet_samples": 32,
+        "inventory_loss": false,
+        "capture_inventory_loss": false,
+        "inventory_weight": 1.0,
+        "focus_interval": null,
+        "device": "cuda",
+        "adam": 2000,
+        "lbfgs": 1200,
+        "threads": 2,
+        "output": "results\\i060_transport_refinement\\dilution_augmented_29",
+        "state_map": "cumulative-hazard-v2"
+      },
+      "model": {
+        "phi0": 0.4,
+        "cin": 0.1,
+        "capacity": 0.2,
+        "dispersion": 0.01,
+        "retention": 4.0,
+        "end": 1.0,
+        "inlet": "dilution",
+        "dilution_fraction": 0.2,
+        "material": null,
+        "boundary": "resident",
+        "switch_time": 0.55,
+        "switch_width": 0.05
+      },
+      "seconds": 155.8055452999979
+    }
+  ]
+}

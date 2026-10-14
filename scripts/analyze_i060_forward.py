@@ -125,6 +125,7 @@ def main():
     analysis = {"runs": rows, "paired_differences": differences}
     if args.experimental_data is not None:
         analysis["experimental_responses"] = experimental_responses(args.experimental_data)
+    OUTPUT.mkdir(parents=True, exist_ok=True)
     (OUTPUT/"analysis.json").write_text(json.dumps(analysis, indent=2)+"\n", encoding="utf-8")
     with (OUTPUT/"curves.csv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream)

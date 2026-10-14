@@ -1,0 +1,168 @@
+{
+  "config": {
+    "method": "resistance",
+    "inlet": "steady",
+    "seed": 29,
+    "width": 32,
+    "capture_nodes": 65,
+    "order": 64,
+    "retention": 4.0,
+    "material_config": null,
+    "switch_time": null,
+    "resume": null,
+    "initialize_transport": "results\\i060_transport_refinement\\steady_resistance_29",
+    "spatial_samples": 80,
+    "temporal_samples": 160,
+    "outlet_samples": 32,
+    "inventory_loss": false,
+    "capture_inventory_loss": false,
+    "inventory_weight": 1.0,
+    "focus_interval": null,
+    "device": "cpu",
+    "adam": 2000,
+    "lbfgs": 1200,
+    "threads": 2,
+    "output": "results\\i060_transport_refinement\\steady_resistance_29",
+    "state_map": "cumulative-hazard-v2"
+  },
+  "model": {
+    "phi0": 0.4,
+    "cin": 0.1,
+    "capacity": 0.2,
+    "dispersion": 0.01,
+    "retention": 4.0,
+    "end": 1.0,
+    "inlet": "steady",
+    "dilution_fraction": 0.2,
+    "material": null,
+    "boundary": "resident",
+    "switch_time": 0.55,
+    "switch_width": 0.05
+  },
+  "metrics": {
+    "mass_rms": 0.0030819615207238237,
+    "exchange_rms": 0.003454990885096072,
+    "constitutive_rms": 0.0021926846337779497,
+    "q_final": 0.5444613093508096,
+    "outlet_c_final": 0.004443377686782664,
+    "sigma_max": 0.15227242748588565,
+    "concentration_min": 0.0,
+    "concentration_max": 0.10000000000000002,
+    "deposited_final": 0.058581412814375546,
+    "mobile_final": 0.012953502771768507,
+    "max_mass_defect": 0.0002251328684427928,
+    "max_pressure_flow_defect": 9.992007221626409e-16,
+    "max_interior_above_current_inlet": 0.0,
+    "cumulative_inlet_solid": 0.07241275528595974,
+    "cumulative_outlet_solid": 0.0010973309863024487
+  },
+  "seconds": 788.3167442000122,
+  "lbfgs_evaluations": 1315,
+  "history": [
+    {
+      "step": 1,
+      "loss": 0.06815933372164132,
+      "seconds": 1.5065909000113606
+    },
+    {
+      "step": 201,
+      "loss": 0.0014020431642231383,
+      "seconds": 31.33268570000655
+    },
+    {
+      "step": 401,
+      "loss": 0.0004627535424214836,
+      "seconds": 68.98464890000469
+    },
+    {
+      "step": 601,
+      "loss": 0.00029661294683137033,
+      "seconds": 108.86632929999905
+    },
+    {
+      "step": 801,
+      "loss": 0.00021084628477241482,
+      "seconds": 145.03673730000446
+    },
+    {
+      "step": 1001,
+      "loss": 0.00018233893798780723,
+      "seconds": 185.74183630000334
+    },
+    {
+      "step": 1201,
+      "loss": 0.00015295149770539818,
+      "seconds": 225.9854914000025
+    },
+    {
+      "step": 1401,
+      "loss": 0.00013053385483621153,
+      "seconds": 272.5709225000028
+    },
+    {
+      "step": 1601,
+      "loss": 0.00011156822911501403,
+      "seconds": 327.28361810000206
+    },
+    {
+      "step": 1801,
+      "loss": 0.00011163931013499952,
+      "seconds": 383.9769918000093
+    },
+    {
+      "step": 2000,
+      "loss": 9.89111468065784e-05,
+      "seconds": 433.81918420000875
+    }
+  ],
+  "runtime": {
+    "torch": "2.8.0+cu126",
+    "dtype": "float64",
+    "device": "cpu"
+  },
+  "training_stages": [
+    {
+      "config": {
+        "method": "resistance",
+        "inlet": "steady",
+        "seed": 29,
+        "width": 32,
+        "capture_nodes": 65,
+        "order": 64,
+        "retention": 4.0,
+        "material_config": null,
+        "switch_time": null,
+        "resume": null,
+        "initialize_transport": "results\\i060_transport_refinement\\steady_resistance_29",
+        "spatial_samples": 80,
+        "temporal_samples": 160,
+        "outlet_samples": 32,
+        "inventory_loss": false,
+        "capture_inventory_loss": false,
+        "inventory_weight": 1.0,
+        "focus_interval": null,
+        "device": "cpu",
+        "adam": 2000,
+        "lbfgs": 1200,
+        "threads": 2,
+        "output": "results\\i060_transport_refinement\\steady_resistance_29",
+        "state_map": "cumulative-hazard-v2"
+      },
+      "model": {
+        "phi0": 0.4,
+        "cin": 0.1,
+        "capacity": 0.2,
+        "dispersion": 0.01,
+        "retention": 4.0,
+        "end": 1.0,
+        "inlet": "steady",
+        "dilution_fraction": 0.2,
+        "material": null,
+        "boundary": "resident",
+        "switch_time": 0.55,
+        "switch_width": 0.05
+      },
+      "seconds": 788.3167442000122
+    }
+  ]
+}

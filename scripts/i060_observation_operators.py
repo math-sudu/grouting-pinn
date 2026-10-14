@@ -33,11 +33,7 @@ def collection_density(times, flow, solid_flux, start, stop, rho_s=RHO_C, rho_w=
 
 
 def segment_inventory(x, c, sigma, phi0, start, stop, rho_s=RHO_C, rho_w=RHO_W):
-    """Whole-segment saturated inventory and the thesis-equivalent W/C.
-
-    The returned density uses initial pore volume. Interpreting it as a delayed
-    measured mass requires accounting for post-stop drainage and mass loss.
-    """
+    """Whole-segment saturated inventory and equivalent water/cement ratio."""
     c, sigma = np.asarray(c), np.asarray(sigma)
     mobile = interval_integral(x, (phi0-sigma)*c, start, stop)
     deposited = interval_integral(x, sigma, start, stop)

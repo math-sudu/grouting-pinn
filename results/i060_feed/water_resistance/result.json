@@ -1,0 +1,660 @@
+{
+  "config": {
+    "method": "resistance",
+    "inlet": "water",
+    "seed": 29,
+    "width": 32,
+    "capture_nodes": 257,
+    "order": 64,
+    "retention": 4.0,
+    "material_config": "config\\i060_material_delivery.json",
+    "switch_time": null,
+    "initial_recipe": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "history": null,
+    "query_time": null,
+    "tail": null,
+    "resume": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+    "initialize_transport": null,
+    "spatial_samples": 80,
+    "temporal_samples": 512,
+    "outlet_samples": 32,
+    "inventory_loss": true,
+    "capture_inventory_loss": true,
+    "inventory_weight": 1000.0,
+    "focus_interval": [
+      0.5,
+      1.0
+    ],
+    "device": "cuda",
+    "adam": 0,
+    "lbfgs": 1600,
+    "threads": 2,
+    "output": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+    "hydraulic_map": "local-viscosity-gravity-v1",
+    "state_map": "feed-flux-cumulative-square-rate-v3"
+  },
+  "model": {
+    "phi0": 0.4,
+    "cin": 0.1388888888888889,
+    "capacity": 0.2,
+    "dispersion": 0.01,
+    "retention": 4.0,
+    "end": 1.0,
+    "inlet": "water",
+    "dilution_fraction": 0.43636363636363634,
+    "material": {
+      "cement_density_kg_m3": 3100.0,
+      "water_density_kg_m3": 1000.0,
+      "water_viscosity_pa_s": 0.00089,
+      "reference_viscosity_pa_s": 0.0142,
+      "batch_age_at_start_min": 0.0,
+      "length_m": 0.3,
+      "initial_permeability_m2": 1e-11,
+      "mechanical_pressure_difference_pa": 100000.0,
+      "gravity_along_flow_m_s2": 9.81,
+      "concentrations": [
+        0.0,
+        0.03125,
+        0.06060606060606061,
+        0.1388888888888889,
+        0.17699115044247787
+      ],
+      "ages_min": [
+        0,
+        5,
+        10,
+        20,
+        30,
+        60
+      ],
+      "viscosity_table_pa_s": [
+        [
+          0.00089,
+          0.0046,
+          0.0085,
+          0.0142,
+          0.0156
+        ],
+        [
+          0.00089,
+          0.0056,
+          0.0102,
+          0.0167,
+          0.0182
+        ],
+        [
+          0.00089,
+          0.0068,
+          0.0121,
+          0.0197,
+          0.0211
+        ],
+        [
+          0.00089,
+          0.0101,
+          0.0173,
+          0.0273,
+          0.0282
+        ],
+        [
+          0.00089,
+          0.015,
+          0.0247,
+          0.0379,
+          0.0388
+        ],
+        [
+          0.00089,
+          0.0486,
+          0.072,
+          0.101,
+          0.0967
+        ]
+      ]
+    },
+    "boundary": "feed_flux",
+    "switch_time": 0.55,
+    "switch_width": 0.05,
+    "feed_transitions": null,
+    "initial_recipe": [
+      1.0,
+      0.0,
+      0.0
+    ]
+  },
+  "metrics": {
+    "mass_rms": 0.03417959662141991,
+    "exchange_rms": 0.006438854952715877,
+    "constitutive_rms": 0.0841972349713138,
+    "q_final": 6.9746963408157265,
+    "outlet_c_final": 4.3191856753417696e-05,
+    "sigma_max": 0.16228981523007358,
+    "concentration_min": 0.0,
+    "concentration_max": 0.1408378006538017,
+    "deposited_final": 0.07870647693031708,
+    "mobile_final": 3.2252422426297908e-06,
+    "max_mass_defect": 3.339637392149597e-05,
+    "max_pressure_flow_defect": 0.00015810462714316298,
+    "cumulative_inlet_solid": 0.08277391559349664,
+    "cumulative_outlet_solid": 0.004097609794858428,
+    "max_interior_above_feed": 0.12285560192933828,
+    "max_feed_flux_defect": 5.551115123125783e-17
+  },
+  "seconds": 361.54744540003594,
+  "lbfgs_evaluations": 1782,
+  "history": [],
+  "runtime": {
+    "torch": "2.8.0+cu126",
+    "dtype": "float64",
+    "device": "cuda"
+  },
+  "training_stages": [
+    {
+      "config": {
+        "method": "resistance",
+        "inlet": "water",
+        "seed": 29,
+        "width": 32,
+        "capture_nodes": 257,
+        "order": 64,
+        "retention": 4.0,
+        "material_config": "config\\i060_material_delivery.json",
+        "switch_time": null,
+        "resume": null,
+        "initialize_transport": "results\\i060_feed\\water_resistance",
+        "spatial_samples": 80,
+        "temporal_samples": 160,
+        "outlet_samples": 32,
+        "inventory_loss": true,
+        "capture_inventory_loss": true,
+        "inventory_weight": 1.0,
+        "focus_interval": null,
+        "device": "cuda",
+        "adam": 0,
+        "lbfgs": 600,
+        "threads": 2,
+        "output": "results\\i060_feed\\water_resistance",
+        "hydraulic_map": "local-viscosity-gravity-v1",
+        "state_map": "feed-flux-cumulative-square-rate-v3"
+      },
+      "model": {
+        "phi0": 0.4,
+        "cin": 0.1388888888888889,
+        "capacity": 0.2,
+        "dispersion": 0.01,
+        "retention": 4.0,
+        "end": 1.0,
+        "inlet": "water",
+        "dilution_fraction": 0.43636363636363634,
+        "material": {
+          "cement_density_kg_m3": 3100.0,
+          "water_density_kg_m3": 1000.0,
+          "water_viscosity_pa_s": 0.00089,
+          "reference_viscosity_pa_s": 0.0142,
+          "batch_age_at_start_min": 0.0,
+          "length_m": 0.3,
+          "initial_permeability_m2": 1e-11,
+          "mechanical_pressure_difference_pa": 100000.0,
+          "gravity_along_flow_m_s2": 9.81,
+          "concentrations": [
+            0.0,
+            0.03125,
+            0.06060606060606061,
+            0.1388888888888889,
+            0.17699115044247787
+          ],
+          "ages_min": [
+            0,
+            5,
+            10,
+            20,
+            30,
+            60
+          ],
+          "viscosity_table_pa_s": [
+            [
+              0.00089,
+              0.0046,
+              0.0085,
+              0.0142,
+              0.0156
+            ],
+            [
+              0.00089,
+              0.0056,
+              0.0102,
+              0.0167,
+              0.0182
+            ],
+            [
+              0.00089,
+              0.0068,
+              0.0121,
+              0.0197,
+              0.0211
+            ],
+            [
+              0.00089,
+              0.0101,
+              0.0173,
+              0.0273,
+              0.0282
+            ],
+            [
+              0.00089,
+              0.015,
+              0.0247,
+              0.0379,
+              0.0388
+            ],
+            [
+              0.00089,
+              0.0486,
+              0.072,
+              0.101,
+              0.0967
+            ]
+          ]
+        },
+        "boundary": "feed_flux",
+        "switch_time": 0.55,
+        "switch_width": 0.05
+      },
+      "seconds": 117.60121350000554
+    },
+    {
+      "config": {
+        "method": "resistance",
+        "inlet": "water",
+        "seed": 29,
+        "width": 32,
+        "capture_nodes": 257,
+        "order": 64,
+        "retention": 4.0,
+        "material_config": "config\\i060_material_delivery.json",
+        "switch_time": null,
+        "initial_recipe": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "history": null,
+        "query_time": null,
+        "tail": null,
+        "resume": "results\\i060_feed\\water_resistance",
+        "initialize_transport": null,
+        "spatial_samples": 80,
+        "temporal_samples": 512,
+        "outlet_samples": 32,
+        "inventory_loss": true,
+        "capture_inventory_loss": true,
+        "inventory_weight": 20.0,
+        "focus_interval": [
+          0.5,
+          0.9
+        ],
+        "device": "cuda",
+        "adam": 0,
+        "lbfgs": 1600,
+        "threads": 2,
+        "output": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+        "hydraulic_map": "local-viscosity-gravity-v1",
+        "state_map": "feed-flux-cumulative-square-rate-v3"
+      },
+      "model": {
+        "phi0": 0.4,
+        "cin": 0.1388888888888889,
+        "capacity": 0.2,
+        "dispersion": 0.01,
+        "retention": 4.0,
+        "end": 1.0,
+        "inlet": "water",
+        "dilution_fraction": 0.43636363636363634,
+        "material": {
+          "cement_density_kg_m3": 3100.0,
+          "water_density_kg_m3": 1000.0,
+          "water_viscosity_pa_s": 0.00089,
+          "reference_viscosity_pa_s": 0.0142,
+          "batch_age_at_start_min": 0.0,
+          "length_m": 0.3,
+          "initial_permeability_m2": 1e-11,
+          "mechanical_pressure_difference_pa": 100000.0,
+          "gravity_along_flow_m_s2": 9.81,
+          "concentrations": [
+            0.0,
+            0.03125,
+            0.06060606060606061,
+            0.1388888888888889,
+            0.17699115044247787
+          ],
+          "ages_min": [
+            0,
+            5,
+            10,
+            20,
+            30,
+            60
+          ],
+          "viscosity_table_pa_s": [
+            [
+              0.00089,
+              0.0046,
+              0.0085,
+              0.0142,
+              0.0156
+            ],
+            [
+              0.00089,
+              0.0056,
+              0.0102,
+              0.0167,
+              0.0182
+            ],
+            [
+              0.00089,
+              0.0068,
+              0.0121,
+              0.0197,
+              0.0211
+            ],
+            [
+              0.00089,
+              0.0101,
+              0.0173,
+              0.0273,
+              0.0282
+            ],
+            [
+              0.00089,
+              0.015,
+              0.0247,
+              0.0379,
+              0.0388
+            ],
+            [
+              0.00089,
+              0.0486,
+              0.072,
+              0.101,
+              0.0967
+            ]
+          ]
+        },
+        "boundary": "feed_flux",
+        "switch_time": 0.55,
+        "switch_width": 0.05,
+        "feed_transitions": null,
+        "initial_recipe": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "seconds": 372.6898605999886
+    },
+    {
+      "config": {
+        "method": "resistance",
+        "inlet": "water",
+        "seed": 29,
+        "width": 32,
+        "capture_nodes": 257,
+        "order": 64,
+        "retention": 4.0,
+        "material_config": "config\\i060_material_delivery.json",
+        "switch_time": null,
+        "initial_recipe": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "history": null,
+        "query_time": null,
+        "tail": null,
+        "resume": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+        "initialize_transport": null,
+        "spatial_samples": 80,
+        "temporal_samples": 512,
+        "outlet_samples": 32,
+        "inventory_loss": true,
+        "capture_inventory_loss": true,
+        "inventory_weight": 200.0,
+        "focus_interval": [
+          0.5,
+          1.0
+        ],
+        "device": "cuda",
+        "adam": 0,
+        "lbfgs": 2000,
+        "threads": 2,
+        "output": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+        "hydraulic_map": "local-viscosity-gravity-v1",
+        "state_map": "feed-flux-cumulative-square-rate-v3"
+      },
+      "model": {
+        "phi0": 0.4,
+        "cin": 0.1388888888888889,
+        "capacity": 0.2,
+        "dispersion": 0.01,
+        "retention": 4.0,
+        "end": 1.0,
+        "inlet": "water",
+        "dilution_fraction": 0.43636363636363634,
+        "material": {
+          "cement_density_kg_m3": 3100.0,
+          "water_density_kg_m3": 1000.0,
+          "water_viscosity_pa_s": 0.00089,
+          "reference_viscosity_pa_s": 0.0142,
+          "batch_age_at_start_min": 0.0,
+          "length_m": 0.3,
+          "initial_permeability_m2": 1e-11,
+          "mechanical_pressure_difference_pa": 100000.0,
+          "gravity_along_flow_m_s2": 9.81,
+          "concentrations": [
+            0.0,
+            0.03125,
+            0.06060606060606061,
+            0.1388888888888889,
+            0.17699115044247787
+          ],
+          "ages_min": [
+            0,
+            5,
+            10,
+            20,
+            30,
+            60
+          ],
+          "viscosity_table_pa_s": [
+            [
+              0.00089,
+              0.0046,
+              0.0085,
+              0.0142,
+              0.0156
+            ],
+            [
+              0.00089,
+              0.0056,
+              0.0102,
+              0.0167,
+              0.0182
+            ],
+            [
+              0.00089,
+              0.0068,
+              0.0121,
+              0.0197,
+              0.0211
+            ],
+            [
+              0.00089,
+              0.0101,
+              0.0173,
+              0.0273,
+              0.0282
+            ],
+            [
+              0.00089,
+              0.015,
+              0.0247,
+              0.0379,
+              0.0388
+            ],
+            [
+              0.00089,
+              0.0486,
+              0.072,
+              0.101,
+              0.0967
+            ]
+          ]
+        },
+        "boundary": "feed_flux",
+        "switch_time": 0.55,
+        "switch_width": 0.05,
+        "feed_transitions": null,
+        "initial_recipe": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "seconds": 389.9383598000277
+    },
+    {
+      "config": {
+        "method": "resistance",
+        "inlet": "water",
+        "seed": 29,
+        "width": 32,
+        "capture_nodes": 257,
+        "order": 64,
+        "retention": 4.0,
+        "material_config": "config\\i060_material_delivery.json",
+        "switch_time": null,
+        "initial_recipe": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "history": null,
+        "query_time": null,
+        "tail": null,
+        "resume": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+        "initialize_transport": null,
+        "spatial_samples": 80,
+        "temporal_samples": 512,
+        "outlet_samples": 32,
+        "inventory_loss": true,
+        "capture_inventory_loss": true,
+        "inventory_weight": 1000.0,
+        "focus_interval": [
+          0.5,
+          1.0
+        ],
+        "device": "cuda",
+        "adam": 0,
+        "lbfgs": 1600,
+        "threads": 2,
+        "output": "paper\\selfrev-r16\\evidence\\water_tail_candidate",
+        "hydraulic_map": "local-viscosity-gravity-v1",
+        "state_map": "feed-flux-cumulative-square-rate-v3"
+      },
+      "model": {
+        "phi0": 0.4,
+        "cin": 0.1388888888888889,
+        "capacity": 0.2,
+        "dispersion": 0.01,
+        "retention": 4.0,
+        "end": 1.0,
+        "inlet": "water",
+        "dilution_fraction": 0.43636363636363634,
+        "material": {
+          "cement_density_kg_m3": 3100.0,
+          "water_density_kg_m3": 1000.0,
+          "water_viscosity_pa_s": 0.00089,
+          "reference_viscosity_pa_s": 0.0142,
+          "batch_age_at_start_min": 0.0,
+          "length_m": 0.3,
+          "initial_permeability_m2": 1e-11,
+          "mechanical_pressure_difference_pa": 100000.0,
+          "gravity_along_flow_m_s2": 9.81,
+          "concentrations": [
+            0.0,
+            0.03125,
+            0.06060606060606061,
+            0.1388888888888889,
+            0.17699115044247787
+          ],
+          "ages_min": [
+            0,
+            5,
+            10,
+            20,
+            30,
+            60
+          ],
+          "viscosity_table_pa_s": [
+            [
+              0.00089,
+              0.0046,
+              0.0085,
+              0.0142,
+              0.0156
+            ],
+            [
+              0.00089,
+              0.0056,
+              0.0102,
+              0.0167,
+              0.0182
+            ],
+            [
+              0.00089,
+              0.0068,
+              0.0121,
+              0.0197,
+              0.0211
+            ],
+            [
+              0.00089,
+              0.0101,
+              0.0173,
+              0.0273,
+              0.0282
+            ],
+            [
+              0.00089,
+              0.015,
+              0.0247,
+              0.0379,
+              0.0388
+            ],
+            [
+              0.00089,
+              0.0486,
+              0.072,
+              0.101,
+              0.0967
+            ]
+          ]
+        },
+        "boundary": "feed_flux",
+        "switch_time": 0.55,
+        "switch_width": 0.05,
+        "feed_transitions": null,
+        "initial_recipe": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "seconds": 361.54744540003594
+    }
+  ]
+}
